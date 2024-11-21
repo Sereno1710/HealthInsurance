@@ -1,29 +1,27 @@
-#######################################################
-# A utils file that contains methods to plot the data #
-#######################################################
-
 import matplotlib.pyplot as plt
-import numpy as np
-import pandas as pd
 import seaborn as sns
+import pandas as pd
 from IPython.display import Markdown
-from IPython.core.display import HTML
 
 class Utils:
     
     def __init__(self, df):
-        HTML("""
-            <style>
-            .output_png {
-                display: table-cell;
-                text-align: center;
-                vertical-align: middle;
-            }
-            </style>
-            """)
         self.df = df
     
-    def print_statistics(self, feature):
+    # Print statistics
+    
+    def print_stats(self, feature):
+        table = '| Label | Count | Percentage |\n| --- | --- | --- |\n'
+        
+        feature_with_na = self.df[feature].fillna('Missing')
+        for label in feature_with_na.value_counts().index:
+            count = feature_with_na.value_counts()[label]
+            percentage = count / len(self.df) * 100
+            table += '| {} | {} | {:.2f} % |\n'.format(label, count, percentage)
+            
+        return Markdown(table)
+    
+    def print_numeric_stats(self, feature):
         table = '| Statistics | Value |\n'
         table += '| --- | --- |\n'
         table += '| Mean | {:.2f} |\n'.format(self.df[feature].mean())
@@ -33,20 +31,35 @@ class Utils:
         table += '| Median | {:.2f} |\n'.format(self.df[feature].median())
         table += '| 75th percentile | {:.2f} |\n'.format(self.df[feature].quantile(0.75))
         table += '| Maximum | {:.2f} |'.format(self.df[feature].max())
+        table += '| IQR | {:.2f} |'.format(self.df[feature].quantile(0.75) - self.df[feature].quantile(0.25))
+        table += '| Skewness | {:.2f} |'.format(self.df[feature].skew())
+        table += '| Kurtosis | {:.2f} |'.format(self.df[feature].kurt())
+        table += '| NA values | {} |'.format(self.df[feature].isna().sum())
         return Markdown(table)
 
-    def plot_statistics(self, feature, with_target_value=False):
+    # Plot statistics
+
+    def plot_stats(self, feature, with_target_value=False):        
         plt.figure(figsize=(8, 4))
         
         if with_target_value:
-            sns.boxplot(x=self.df[feature], palette='viridis', hue=self.df['health_ins'])
+            sns.boxplot(x=feature, data=self.df, palette='viridis', hue='health_ins')
         else:
-            sns.boxplot(x=self.df[feature])
-            
+            sns.boxplot(x=feature, data=self.df)
+
         plt.title(f'{feature} boxplot')
         plt.show()
         
-    def plot_numeric_distribution(self, feature, plot_outliers = True):
+        
+    # Plot distribution
+        
+    def plot_dist(self, feature):
+        pd.crosstab(self.df[feature].fillna('Missing'), self.df['health_ins']).plot(kind='bar', stacked=True, color=['#FF0000', '#00FF00'])
+        plt.title(f'{feature} distribution')
+        plt.xticks(rotation=45)
+        plt.show()
+        
+    def plot_numeric_dist(self, feature, plot_outliers=True):
         # Calculate outliers using the IQR method
         Q1 = self.df[feature].quantile(0.25)
         Q3 = self.df[feature].quantile(0.75)
@@ -66,16 +79,6 @@ class Utils:
             plt.axvline(upper_bound, color='red', linestyle='--', label=f'Upper Bound: {upper_bound:.2f}')
 
         plt.legend()
-        plt.title(f'{feature} Distribution')
+        plt.title(f'{feature} distribution')
         plt.show()
         
-    def plot_categorical_distribution(self, feature):
-        sns.countplot(x=feature, data=self.df, palette='viridis')
-        plt.title(f'{feature} Distribution')
-        plt.show()
-
-    def plot_distribution(self, feature, plot_outliers = True):
-        if self.df[feature].dtype in ['int64', 'float64']:
-            self.plot_numeric_distribution(feature, plot_outliers)
-        else:
-            self.plot_categorical_distribution(feature)
