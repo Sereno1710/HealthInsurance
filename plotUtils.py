@@ -7,6 +7,8 @@ class Utils:
     
     def __init__(self, df):
         self.df = df
+        custom_palette = ['#7464D1', '#451176', '#FF0000', '#0000FF', '#00FF00']
+        sns.set_palette(custom_palette)
     
     # Print statistics
     
@@ -43,7 +45,7 @@ class Utils:
         plt.figure(figsize=(8, 4))
         
         if with_target_value:
-            sns.boxplot(x=feature, data=self.df, palette='viridis', hue='health_ins')
+            sns.boxplot(x=feature, data=self.df, hue='health_ins')
         else:
             sns.boxplot(x=feature, data=self.df)
 
@@ -54,7 +56,7 @@ class Utils:
     # Plot distribution
         
     def plot_dist(self, feature):
-        pd.crosstab(self.df[feature].fillna('Missing'), self.df['health_ins']).plot(kind='bar', stacked=True, color=['#FF0000', '#00FF00'])
+        pd.crosstab(self.df[feature].fillna('Missing'), self.df['health_ins']).plot(kind='bar', stacked=True)
         plt.title(f'{feature} distribution')
         plt.xticks(rotation=45)
         plt.show()
